@@ -1,0 +1,16 @@
+# This is the configuration used to check the rubocop source code.
+
+inherit_from:
+  - https://raw.githubusercontent.com/serverscom/best-practices/rubocop-0.88/.rubocop.yml
+  - .rubocop_todo.yml
+
+inherit_mode:
+  merge:
+    - Exclude
+
+require:
+  - rubocop-performance
+
+AllCops:
+  TargetRubyVersion: 2.7
+  NewCops: enable
