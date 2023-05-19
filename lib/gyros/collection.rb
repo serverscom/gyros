@@ -14,5 +14,9 @@ module  Gyros
     def apply_with_scope(scope, params)
       apply(scope_for(scope), params)
     end
+
+    def apply(scope, _params)
+      scope
+    end
   end
 end
