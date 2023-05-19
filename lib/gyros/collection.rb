@@ -6,6 +6,7 @@ module  Gyros
     include Gyros::Features::Scopeable
     include Gyros::Features::Filterable
     include Gyros::Features::Sortable
+    include Gyros::Features::Common
 
     def initialize(base_scope)
       @base_scope = base_scope
@@ -13,10 +14,6 @@ module  Gyros
 
     def apply_with_scope(scope, params)
       apply(scope_for(scope), params)
-    end
-
-    def apply(scope, _params)
-      scope
     end
   end
 end

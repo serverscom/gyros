@@ -5,7 +5,7 @@ module Gyros
     class Filter < Base
       attr_reader :keys
       attr_reader :block
-      
+
       def self.build(keys, block)
         new(keys, block)
       end
