@@ -2,11 +2,11 @@
 
 module  Gyros
   class Collection
+    include Gyros::Features::Common
     include Gyros::Features::Modifiable
     include Gyros::Features::Scopeable
     include Gyros::Features::Filterable
     include Gyros::Features::Sortable
-    include Gyros::Features::Common
 
     def initialize(base_scope)
       @base_scope = base_scope
