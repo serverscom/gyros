@@ -49,6 +49,10 @@ module Gyros
           @direction_key = v
         end
 
+        def respond_to_missing?(meth, *args)
+          Gyros::Registry.sorters.key?(meth) || super
+        end
+
         def method_missing(meth, *args, &block)
           if Gyros::Registry.sorters[meth]
             define_singleton_method(meth) do |*args, &block|

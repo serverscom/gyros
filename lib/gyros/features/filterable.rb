@@ -36,6 +36,10 @@ module Gyros
           @filters = v
         end
 
+        def respond_to_missing?(meth, *args)
+          Gyros::Registry.filters.key?(meth) || super
+        end
+
         def method_missing(meth, *args, &block)
           if Gyros::Registry.filters[meth]
             define_singleton_method(meth) do |*args, &block|
