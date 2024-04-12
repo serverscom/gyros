@@ -11,30 +11,26 @@ module Gyros
       end
 
       module InstanceMethods
-        def initialize(*)
-          apply_base_scopes
-
-          super
-        end
-
         # Returns modified scope for an action.
         # Scope modifiers are defined by class-level calls to scope_for.
         def scope_for(method)
-          result = @base_scope.dup
+          result = apply_base_scopes
+
           Array(self.class.scopes[method]).each do |scope|
             result = scope.arity.positive? ? instance_exec(result, &scope) : result.instance_exec(&scope)
           end
+
           result
         end
 
         def apply_base_scopes
-          @base_scope = base_scope.dup
+          @new_scope = @base_scope.dup
 
           self.class.default_scopes.each do |scope|
-            @base_scope = base_query.instance_exec(&scope)
+            @new_scope = @new_scope.instance_exec(&scope)
           end
 
-          @base_scope = base_query
+          @new_scope
         end
       end
 
@@ -70,7 +66,7 @@ module Gyros
         end
 
         def default_scope(&block)
-          base_scopes << block
+          default_scopes << block
         end
       end
     end
