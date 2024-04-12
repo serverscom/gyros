@@ -1,39 +1,114 @@
 # Gyros
 
-TODO: Delete this and the text below, and describe your gem
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/gyros`. To experiment with that code, run `bin/console` for an interactive prompt.
+Gyros is a Ruby library designed to simplify data handling, specifically focusing on streamlining data filtering processes. This library provides an intuitive way to manage and query data efficiently.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Add this line to your application's Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
+```ruby
+gem 'gyros'
+```
 
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG
+And then execute:
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+```bash
+bundle install
+```
 
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG
+Or install it yourself as:
+
+```bash
+gem install gyros
+```
+
+
+## Features
+
+- **Scope Management:** Gyros allows for the comprehensive management of scopes, enabling you to define and apply different data scopes based on your requirements.
+
+- **Dynamic Filtering:** The library provides the ability to create dynamic filters that can adjust based on the parameters passed, facilitating a more flexible data querying experience.
+
+- **Sorting Capabilities:** With Gyros, you have the control to define sorting logic, ensuring that your data is presented in the order you need.
+
+- **Use of Modifiers:** Enhance your queries with modifiers, allowing for additional customization and refinement of the returned data sets.
+
+- **Code Organization with Collections:** Gyros supports the organization of your code through the use of different collections, enabling a cleaner and more modular approach to data handling.
 
 ## Usage
 
-TODO: Write usage instructions here
+Define base class:
 
-## Development
+```ruby
+class BaseRepository < Gyros::Base
+  def list(params = {})
+    apply_with_scope(:list, params)
+  end
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+  def show!(id, params = {})
+    apply_with_scope(:show, params).find(id)
+  end
+end
+```
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+Desribe your repository:
 
-## Contributing
+```ruby
+class UserRepository < BaseRepository
+  model { User.all }
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/gyros. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/gyros/blob/master/CODE_OF_CONDUCT.md).
+  collection :default do
+    # Define default conditions for all queries in collection
+    default_scope do
+      where(deleted_at: nil)
+    end
+
+    modifier :visible do |user|
+      if user.admin?
+        self
+      else
+        user.where.not(role: 'admin')
+      end
+    end
+
+    scope_for(:show) do
+      # Apply something for the show query
+    end
+
+    scope_for(:list) do
+      # Apply something for the list query
+    end
+
+    # Define sortable fields
+    %i[id name email created_at updated_at].each do |key|
+      order_by(key) do |_column, dir|
+      	order(key => dir)
+      end
+    end
+
+    # Define filters
+    filter :email do |email|
+      where('email ILIKE ?', "%#{email}%")
+    end
+
+    filter :created_from do |from|
+      where('created_at >= ?', from)
+    end
+
+    filter :created_to do |to|
+      where('created_at <= ?', to)
+    end
+  end
+end
+```
+
+Use it:
+
+```ruby
+repository = UserRepository.new(:default).visible(current_user)
+repository.list(email: '@example.com', created_from: 1.year.ago, created_to: Time.now, sort: 'created_at', dir: :desc) 
+```
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the Gyros project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/gyros/blob/master/CODE_OF_CONDUCT.md).
+The gem is available as open source under the terms of the MIT License.
