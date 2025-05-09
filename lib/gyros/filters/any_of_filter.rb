@@ -7,8 +7,8 @@ module Gyros
         keys.any? { |p| current_params.key?(p) }
       end
 
-      def apply(current_params, result)
-        result.instance_exec(current_params.slice(*keys), &block)
+      def apply(result, current_params, **kwargs)
+        result.instance_exec(*current_params.slice(*keys).values, **kwargs, &block)
       end
     end
   end

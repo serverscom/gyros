@@ -11,16 +11,16 @@ module Gyros
       end
 
       module InstanceMethods
-        def apply(scope, params)
+        def apply(scope, params, **kwargs)
           result = scope
 
           self.class.sorters.each do |sorting|
             next unless sorting.match?(params, self.class.sorting_key)
 
-            result = sorting.apply(params, result, self.class.direction_key)
+            result = sorting.apply(params, result, self.class.direction_key, **kwargs)
           end
 
-          super(result, params)
+          super(result, params, **kwargs)
         end
       end
 

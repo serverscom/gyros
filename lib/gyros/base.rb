@@ -30,6 +30,14 @@ module Gyros
       end
     end
 
+    def context
+      @collection.context
+    end
+
+    def with_context(context)
+      @collection.with_context(context)
+    end
+
     class << self
       def model(value = nil, &block)
         if value

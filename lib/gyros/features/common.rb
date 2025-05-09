@@ -13,7 +13,7 @@ module Gyros
         # Applies defined filters to scope.
         # Only applies a filter if params hash has
         # all of the keys defined by filter.
-        def apply(scope, _params)
+        def apply(scope, _params, **kwargs)
           scope
         end
       end

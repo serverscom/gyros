@@ -14,16 +14,16 @@ module Gyros
         # Applies defined filters to scope.
         # Only applies a filter if params hash has
         # all of the keys defined by filter.
-        def apply(scope, params)
+        def apply(scope, params, **kwargs)
           result = scope
 
           self.class.filters.each do |filter|
             next unless filter.match?(params)
 
-            result = filter.apply(params, result)
+            result = filter.apply(result, params, **kwargs)
           end
 
-          super(result, params)
+          super(result, params, **kwargs)
         end
       end
 

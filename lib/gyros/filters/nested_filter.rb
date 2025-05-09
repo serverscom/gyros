@@ -11,7 +11,7 @@ module Gyros
         super
       end
 
-      def self.build(key, &block)
+      def self.build(key, block)
         klass = Class.new(self)
         klass.instance_exec(key, &block)
         klass.new(key)
@@ -20,8 +20,7 @@ module Gyros
       attr_reader :key
 
       def initialize(key)
-        @key = key
-        @keys = [key]
+        @key = Array(key).first
       end
 
       def match?(current_params)
@@ -29,10 +28,10 @@ module Gyros
           current_params[key].is_a?(Hash)
       end
 
-      def apply(current_params, result)
+      def apply(result, current_params, **kwargs)
         nested_params = current_params[key]
 
-        apply(result, nested_params)
+        super(result, nested_params, **kwargs)
       end
     end
   end

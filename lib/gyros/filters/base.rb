@@ -19,10 +19,9 @@ module Gyros
         false
       end
 
-      def apply(_current_params, _result)
-        raise NotImplementedError
+      def apply(result, _current_params, **)
+        result
       end
     end
   end
 end
-
