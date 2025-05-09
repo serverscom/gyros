@@ -33,6 +33,13 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
       
+      - name: Add platform to bundle
+        run: |
+          bundle lock --add-platform x86_64-linux
+          bundle lock --add-platform ruby
+          bundle lock --add-platform x86_64-darwin
+          bundle lock --add-platform arm64-darwin
+
       - name: Install dependencies
         run: |
           gem install bundler
