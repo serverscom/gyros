@@ -1,6 +1,6 @@
 # Gyros
 
-Gyros is a Ruby library designed to simplify data handling, specifically focusing on streamlining data filtering processes. This library provides an intuitive way to manage and query data efficiently.
+Gyros is a powerful Ruby library designed to simplify data handling and querying. It provides a flexible and intuitive way to build complex queries dynamically while keeping your code clean and maintainable.
 
 ## Installation
 
@@ -22,22 +22,98 @@ Or install it yourself as:
 gem install gyros
 ```
 
-
 ## Features
 
-- **Scope Management:** Gyros allows for the comprehensive management of scopes, enabling you to define and apply different data scopes based on your requirements.
+### Collection Management
+- **Multiple Collections**: Define multiple collections within a single repository for different query contexts
+- **Context Awareness**: Pass context data to your queries that can be used by filters and modifiers
+- **Deep Cloning**: Collections are safely cloned when modified, preventing unintended side effects
 
-- **Dynamic Filtering:** The library provides the ability to create dynamic filters that can adjust based on the parameters passed, facilitating a more flexible data querying experience.
+### Scoping System
+- **Default Scopes**: Define base conditions that apply to all queries in a collection
+- **Action Scopes**: Create specific scopes for different actions (list, show, etc.)
+- **Parameterized Scopes**: Scopes can accept parameters for dynamic behavior
 
-- **Sorting Capabilities:** With Gyros, you have the control to define sorting logic, ensuring that your data is presented in the order you need.
+### Filtering System
 
-- **Use of Modifiers:** Enhance your queries with modifiers, allowing for additional customization and refinement of the returned data sets.
+#### Basic Filters
+Simple single or multi-parameter filters for exact matching:
 
-- **Code Organization with Collections:** Gyros supports the organization of your code through the use of different collections, enabling a cleaner and more modular approach to data handling.
+```ruby
+filter :name do |name|
+  where(name: name)
+end
 
-## Usage
+filter :role, :active do |role, active|
+  where(role: role, active: active)
+end
+```
 
-Define base class:
+#### Nested Filters
+Group related filters under a namespace for better organization:
+
+```ruby
+nested_filter :created_at do
+  filter :from do |date|
+    where('created_at >= ?', date)
+  end
+
+  filter :to do |date|
+    where('created_at <= ?', date)
+  end
+end
+```
+
+#### Any-of Filters
+Match any of multiple conditions for flexible searching:
+
+```ruby
+any_of_filter :search_by, :email, :phone do |params|
+  result = []
+  result.concat(where('email LIKE ?', "%#{params[:email]}%")) if params[:email]
+  result.concat(where('phone LIKE ?', "%#{params[:phone]}%")) if params[:phone]
+  result.uniq
+end
+```
+
+### Sorting System
+- **Field-based Sorting**: Define sortable fields with custom logic
+- **Direction Control**: Support for ascending and descending order
+- **Context-aware Sorting**: Implement complex sorting logic using context
+
+```ruby
+order_by :relevance do |field, direction, context:|
+  next self unless context[:query]
+  
+  order_by_relevance(context[:query])
+end
+```
+
+### Modifiers System
+Modifiers provide a way to customize queries with chainable methods:
+
+- **Basic Modifiers**: Simple query modifications
+- **Context-aware Modifiers**: Access context in modifiers
+- **Final Modifiers**: Prevent further modifications after application
+- **Frozen State Handling**: Safe handling of frozen collections
+
+```ruby
+modifier :visible_for do |user|
+  if user.admin?
+    self
+  else
+    where.not(role: 'admin')
+  end
+end
+
+modifier :only_department, final: true do |department|
+  where(department: department)
+end
+```
+
+## Usage Example
+
+First, define your base repository:
 
 ```ruby
 class BaseRepository < Gyros::Base
@@ -45,70 +121,89 @@ class BaseRepository < Gyros::Base
     apply_with_scope(:list, params)
   end
 
-  def show!(id, params = {})
+  def show(id, params = {})
     apply_with_scope(:show, params).find(id)
   end
 end
 ```
 
-Desribe your repository:
+Then create your specific repository:
 
 ```ruby
 class UserRepository < BaseRepository
   model { User.all }
 
   collection :default do
-    # Define default conditions for all queries in collection
+    # Default scope for all queries
     default_scope do
       where(deleted_at: nil)
     end
 
-    modifier :visible do |user|
+    # Modifiers
+    modifier :visible_for do |user|
       if user.admin?
         self
       else
-        user.where.not(role: 'admin')
+        where.not(role: 'admin')
       end
     end
 
-    scope_for(:show) do
-      # Apply something for the show query
-    end
-
+    # Scopes
     scope_for(:list) do
-      # Apply something for the list query
+      where(active: true)
     end
 
-    # Define sortable fields
-    %i[id name email created_at updated_at].each do |key|
-      order_by(key) do |_column, dir|
-      	order(key => dir)
+    # Sorting
+    order_by :name, :email, :created_at do |field, direction|
+      order(field => direction)
+    end
+
+    # Basic filters
+    filter :role do |role|
+      where(role: role)
+    end
+
+    # Nested filters
+    nested_filter :date_range do
+      filter :from do |date|
+        where('created_at >= ?', date)
+      end
+
+      filter :to do |date|
+        where('created_at <= ?', date)
       end
     end
 
-    # Define filters
-    filter :email do |email|
-      where('email ILIKE ?', "%#{email}%")
-    end
-
-    filter :created_from do |from|
-      where('created_at >= ?', from)
-    end
-
-    filter :created_to do |to|
-      where('created_at <= ?', to)
+    # Any-of filters
+    any_of_filter :search do |params|
+      next self if params.empty?
+      
+      result = []
+      result.concat(where('email LIKE ?', "%#{params[:email]}%")) if params[:email]
+      result.concat(where('name LIKE ?', "%#{params[:name]}%")) if params[:name]
+      result.uniq
     end
   end
 end
 ```
 
-Use it:
+Use your repository:
 
 ```ruby
-repository = UserRepository.new(:default).visible(current_user)
-repository.list(email: '@example.com', created_from: 1.year.ago, created_to: Time.now, sort: 'created_at', dir: :desc) 
+repository = UserRepository.new(:default)
+  .visible_for(current_user)
+  .with_context(query: 'search term')
+
+# Apply filters, sorting and scopes
+users = repository.list(
+  role: 'manager',
+  date_range: { from: 1.month.ago, to: Time.now },
+  search: { email: '@company.com' },
+  sort: 'created_at',
+  dir: :desc
+)
 ```
 
 ## License
 
-The gem is available as open source under the terms of the MIT License.
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
