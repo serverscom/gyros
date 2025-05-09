@@ -40,13 +40,13 @@ module Gyros
           Gyros::Registry.filters.key?(meth) || super
         end
 
-        def method_missing(meth, *args, &block)
+        def method_missing(meth, ...)
           if Gyros::Registry.filters[meth]
-            define_singleton_method(meth) do |*args, &block|
-              self.filters += Array(Gyros::Registry.filters[meth].call(*args, &block))
+            define_singleton_method(meth) do |*, **, &|
+              self.filters += Array(Gyros::Registry.filters[meth].call(...))
             end
 
-            send(meth, *args, &block)
+            send(meth, ...)
           else
             super
           end
