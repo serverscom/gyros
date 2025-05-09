@@ -41,32 +41,32 @@ RSpec.describe Gyros::Features::Sortable do
       collection :default do
         scope_for(:list) { self }
 
-        # Базовая сортировка по одному полю
+        # Basic single-field sorting
         order_by :name do |field, direction|
           direction == :asc ? 
             sort_by { |item| item.name } :
             sort_by { |item| item.name }.reverse
         end
 
-        # Сортировка по числовому полю
+        # Numeric field sorting
         order_by :score do |field, direction|
           direction == :asc ?
             sort_by { |item| item.score } :
             sort_by { |item| item.score }.reverse
         end
 
-        # Сортировка по дате
+        # Date field sorting
         order_by :created_at do |field, direction|
           direction == :asc ?
             sort_by { |item| item.created_at } :
             sort_by { |item| item.created_at }.reverse
         end
 
-        # Сортировка с учетом контекста
+        # Context-aware sorting
         order_by :relevance do |field, direction, context:|
           next self unless context[:query]
           
-          # Сортировка по релевантности относительно поискового запроса
+          # Sort by relevance relative to search query
           sort_by do |item|
             [
               -(item.name.downcase.include?(context[:query].downcase) ? 1 : 0),

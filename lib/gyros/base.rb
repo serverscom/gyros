@@ -13,6 +13,10 @@ module Gyros
       @collection.apply_with_scope(scope, params)
     end
 
+    def scope_for(method)
+      @collection.scope_for(method)
+    end
+
     def respond_to_missing?(meth, *args)
       @collection.respond_to?(meth) || super
     end
